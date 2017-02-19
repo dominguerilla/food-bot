@@ -10,6 +10,7 @@ var address_cache = [];
 // A cache of available restaurants from EatStreet.
 // Should be populated with 
 // {name : string, apiKey : string }
+// This will make it easier to search Eatstreet for a specific restaurant
 var restaurant_cache = [];
 
 var http = require('http');
@@ -23,10 +24,12 @@ function Initialize(){
         token: 'xoxb-62642765440-fD85sUDyn1WQj3V8IZHDvD3h'
     }).startRTM();
 
-    controller.hears(['list'], 'direct_message,direct_mention,mention', ListRestaurants);
+    controller.hears(['menu'], 'direct_message', GetMenu);
+    controller.hears(['list'], 'direct_message', ListRestaurants);
 }
 
 // Caches the restaurants that are close to the given address, to mitigate repetitive calls to Eatstreet API
+// Also caches the restaurants found into the restaurant_cache
 function CacheAddressAndRestaurants(address, restaurants){
     if(restaurants.length > 0){
         // See if the address entry already exists in cache
@@ -83,7 +86,6 @@ function PrintAddressCache(){
     console.log('Number of cache entries: ' + address_cache.length);
     console.log('===================');
     address_cache.forEach((e) => {
-        console.log('-------------------');
         console.log('Restaurant: ' + e.address);
         console.log('Time of cache: ' + e.time_of_cache);
         console.log('Available restaurants:');
@@ -99,7 +101,6 @@ function PrintRestaurantCache(){
     console.log('Number of cache entries: ' + restaurant_cache.length);
     console.log('===================');
     restaurant_cache.forEach((e) => {
-        console.log('-------------------');
         console.log('Restaurant: ' + e.name);
         console.log('apiKey: ' + e.apiKey);
         console.log('-------------------');
@@ -107,6 +108,9 @@ function PrintRestaurantCache(){
     console.log('===================');
 }
 
+// Lists the restaurants available for a given address.
+// Also caches the search into address_cache, as well as the restaurants found
+// in restaurant_cache.
 function ListRestaurants(bot, message){
     var response = '';
     var restaurant_list = [];
@@ -173,6 +177,42 @@ function ListRestaurants(bot, message){
     });
 }
 
+function GetMenu(bot, message){
+    bot.startConversation(message, function(err, convo){
+        if(!err){
+            convo.ask('Name of restaurant?', function(response, convo){convo.next();},{'key' : 'name'});
+            convo.on('end', function(convo){
+                if(convo.status == 'completed'){
+                    var reply_string = [];
+                    bot.reply(message, 'Finding menu....');
+                    var name = convo.extractResponse('name');
+                    var rest_index = IndexOfObject(restaurant_cache, name, function(element, targetval){
+                        return element.name === targetval;
+                    });
+                    if(rest_index > 0){
+                        eatstreet.GetMenu(restaurant_cache[rest_index].apiKey, function(response){
+                            response = JSON.parse(response);
 
+                            // iterating over each category
+                            response.forEach((element) => {
+                                reply_string.push('Category: ' + element.name + '\n');
+
+                                // iterating over inner 'items' array
+                                element.items.forEach((inner_element) => {
+                                    reply_string.push(inner_element.name + " " + inner_element.basePrice + '\n');
+                                });
+                            });
+                            bot.reply(message, "Menu items for " + restaurant_cache[rest_index].name +  ": " + reply_string.join(''));
+                        });
+                    }else{
+                        bot.reply("Couldn't find " + name + ' in saved restaurants.');
+                    }
+                }
+            });
+        }else{
+            console.log('*** ERROR STARTING CONVERSATION ***');
+        }
+    });
+}
 
 Initialize();
