@@ -8,18 +8,6 @@ var restaurant_search_path = "/publicapi/v1/restaurant/search?";
 var method = "delivery";
 var address = "618 Allison Road Piscataway NJ";
 
-function Hello(){
-    console.log('hello');
-}
-
-function GetNum(){
-    return 5;
-}
-
-function GetSampleJSON(){
-    return {'key1' : 'val1', 'key2' : 'val2', 'key3' : 'val3'};
-}
-
 // Gets the restaurants near this address.
 function GetRestaurants(address, callback){
     console.log('Received address: ' + address);
@@ -54,6 +42,3 @@ function GetRestaurants(address, callback){
 module.exports.GetRestaurants = function (address, callback){
     GetRestaurants(address, callback);
 };
-module.exports.Hello = Hello;
-module.exports.GetNum = GetNum;
-module.exports.GetSampleJSON = GetSampleJSON;

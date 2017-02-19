@@ -5,7 +5,12 @@ var bot;
 // Should be populated with 
 // { address : string, time_of_cache: long, 
 //   restaurants : [ { name : string, apiKey : string } ] }
-var query_cache = [];
+var address_cache = [];
+
+// A cache of available restaurants from EatStreet.
+// Should be populated with 
+// {name : string, apiKey : string }
+var restaurant_cache = [];
 
 var http = require('http');
 var restaurants = require('./restaurant.json');
@@ -22,20 +27,36 @@ function Initialize(){
 }
 
 // Caches the restaurants that are close to the given address, to mitigate repetitive calls to Eatstreet API
-function CacheRestaurants(address, restaurants){
+function CacheAddressAndRestaurants(address, restaurants){
     if(restaurants.length > 0){
-        var existing_index = query_cache.indexOf(o => o.address === address);
+        // See if the address entry already exists in cache
+        var existing_index = IndexOfObject(address_cache, address, function(element, targetval){
+            return element.address === targetval;
+        });
         if (existing_index !== -1){
             // this address has been looked up already--delete previous entry
-            console.log('Deleting previous entry for ' + query_cache[existing_index].address);
-            query_cache.splice(existing_index, 1);
+            console.log('Deleting previous entry for ' + address_cache[existing_index].address);
+            address_cache.splice(existing_index, 1);
         }
 
         var rest_tuples = [];
         // first, get the restaurant names and their apiKeys
-        restaurants.forEach((element) => {rest_tuples.push({'name' : element.name, 'apiKey' : element.apiKey}); });
+        restaurants.forEach((element) => {
+            r = {'name' : element.name, 'apiKey' : element.apiKey};
+            
+            // check if restaurant is already in restaurant_cache
+            var r_index = IndexOfObject(restaurant_cache, r.name, function(element, targetval){
+                return element.name === targetval;
+            });
+            // if it's not already in there, push it to restaurant cache
+            if(r_index == -1){
+                restaurant_cache.push(r);
+            }
+            // add to address_cache entry
+            rest_tuples.push(r); 
+        });
 
-        query_cache.push(
+        address_cache.push(
             {
                 'address' : address,
                 'time_of_cache' : Date.now(),
@@ -45,11 +66,23 @@ function CacheRestaurants(address, restaurants){
     }
 }
 
-function PrintCache(){
-    console.log('\n PRINTING CACHE');
-    console.log('Number of cache entries: ' + query_cache.length);
+// Check if something exists in an array of object, based on the given checkFunc
+// checkFunc should be = function(element, targetval) that returns true if 
+// there's a match, false otherwise
+function IndexOfObject(arr, targetval, checkFunc){
+    for(var i = 0; i < arr.length; i++){
+        if(checkFunc(arr[i], targetval)){
+            return i;
+        }
+    }
+    return -1;
+}
+
+function PrintAddressCache(){
+    console.log('\nPRINTING ADDRESS CACHE');
+    console.log('Number of cache entries: ' + address_cache.length);
     console.log('===================');
-    query_cache.forEach((e) => {
+    address_cache.forEach((e) => {
         console.log('-------------------');
         console.log('Restaurant: ' + e.address);
         console.log('Time of cache: ' + e.time_of_cache);
@@ -59,6 +92,19 @@ function PrintCache(){
     });
     console.log('===================');
 
+}
+
+function PrintRestaurantCache(){
+    console.log('\nPRINTING RESTAURANT CACHE');
+    console.log('Number of cache entries: ' + restaurant_cache.length);
+    console.log('===================');
+    restaurant_cache.forEach((e) => {
+        console.log('-------------------');
+        console.log('Restaurant: ' + e.name);
+        console.log('apiKey: ' + e.apiKey);
+        console.log('-------------------');
+    });
+    console.log('===================');
 }
 
 function ListRestaurants(bot, message){
@@ -111,8 +157,8 @@ function ListRestaurants(bot, message){
                             if(response.restaurants.length == 0){
                                 bot.reply(message, 'No restaurants found for ' + address + ".");
                             }else{
-                                CacheRestaurants(address, response.restaurants);
-                                PrintCache();
+                                CacheAddressAndRestaurants(address, response.restaurants);
+                                PrintRestaurantCache();
                                 response.restaurants.forEach((element) => {restaurant_list.push(element.name); });
                                 bot.reply(message, 'Available restaurants for ' + address + ': \n' + restaurant_list.join('\n'));
                             }
