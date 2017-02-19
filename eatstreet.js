@@ -1,3 +1,5 @@
+// Handles dealing with the Eatstreet API.
+
 var http = require('http');
 var request = require('request');
 
