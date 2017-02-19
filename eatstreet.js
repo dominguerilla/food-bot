@@ -18,29 +18,15 @@ function GetSampleJSON(){
     return {'key1' : 'val1', 'key2' : 'val2', 'key3' : 'val3'};
 }
 
-function PrintResponse(response){
-    var str = '';
-
-    //another chunk of data has been recieved, so append it to `str`
-    response.on('data', function (chunk) {
-        str += chunk;
-    });
-
-    //the whole response has been recieved, so we just print it out here
-    response.on('end', function () {
-        console.log(str);
-    });
-}
-
 // Gets the restaurants near this address.
-function GetRestaurants(address, method){
+function GetRestaurants(address, callback){
     console.log('Received address: ' + address);
     address = encodeURIComponent(address);
     console.log('Encoded address: ' + address);
 
     console.log('Received method: ' + method);
 
-    var path_url = restaurant_search_path + "method=" + method + "&street-address=" + address;
+    var path_url = restaurant_search_path + "method=delivery&street-address=" + address;
     console.log('Path URL: ' + path_url);
 
     var options = {
@@ -50,10 +36,22 @@ function GetRestaurants(address, method){
     };
 
     
-    http.request(options, PrintResponse).end();
+    var res = null;
+    http.request(options, function (response){
+        var str = '';
+        response.on('data', function (chunk){
+            str += chunk;
+        });
+
+        response.on('end', function(){
+            return callback(str);
+        })
+    }).end();
 }
 
-module.exports.GetRestaurants = GetRestaurants;
+module.exports.GetRestaurants = function (address, callback){
+    GetRestaurants(address, callback);
+};
 module.exports.Hello = Hello;
 module.exports.GetNum = GetNum;
 module.exports.GetSampleJSON = GetSampleJSON;

@@ -1,112 +1,78 @@
 var Botkit;
 var controller;
 var bot;
+var query_cache = [];
 
 var http = require('http');
 var restaurants = require('./restaurant.json');
-
+var eatstreet = require('./eatstreet.js');
 
 function Initialize(){
     Botkit = require('./node_modules/botkit/lib/Botkit.js');
     controller = Botkit.slackbot({});
     bot = controller.spawn({
-        token: 'xoxb-62642765440-Wl0VpsOWjH49pKoCbvITCJKy'
+        token: 'xoxb-142754318753-jqdOuX5RQs6mpSwKlhP8kzlQ'
     }).startRTM();
 
     controller.hears(['list'], 'direct_message,direct_mention,mention', ListRestaurants);
-    controller.hears(['eatstreet'], 'direct_message,direct_mention,mention', Convo_GetRestaurantsForAddress);
 }
+
 
 function ListRestaurants(bot, message){
-    var rest = "";
-    var isFirst = true;
-    restaurants.restaurants.forEach(function (element) { 
-        if(isFirst){
-            rest += element.name;
-            isFirst = false;
+    var response = '';
+    var restaurant_list = [];
+
+    bot.startConversation(message, function(err, convo){
+        if(!err){
+            console.log('Conversation started.');
+            convo.ask("Address of delivery?", function(response, convo){
+                convo.ask("Your address is " + response.text + "?", [
+                                {
+                                    pattern: bot.utterances.yes,
+                                    callback: function(response, convo) {
+                                        // since no further messages are queued after this,
+                                        // the conversation will end naturally with status == 'completed'
+                                        convo.next();
+                                    }
+                                },
+                                {
+                                    pattern: bot.utterances.no,
+                                    callback: function(response, convo) {
+                                        convo.repeat();
+                                    }
+                                },
+                                {
+                                    pattern: ['cancel', 'never mind', 'nvm'],
+                                    callback: function(response, convo){
+                                        convo.say('No problem.');
+                                        convo.stop();
+                                    }
+                                },
+                                {
+                                    default: true,
+                                    callback: function(response, convo) {
+                                        convo.repeat();
+                                    }
+                                }
+                ]);
+                convo.next();
+            }, {'key' : 'address'});
+            convo.on('end', function(convo){
+                if(convo.status == 'completed'){
+                        bot.reply(message, 'Searching for restaurants....');
+                        eatstreet.GetRestaurants(convo.extractResponse('address'),  function(rez){
+                            response = JSON.parse(rez);
+                            response.restaurants.forEach((element) => {restaurant_list.push(element.name); });
+                            bot.reply(message, 'Available restaurants: \n' + restaurant_list.join('\n'));
+                        });
+                }
+            });
         }else{
-            rest += ", " + element.name;
+            console.log('Error has occured: ' + err);
         }
     });
-    bot.reply(message, "Available restaurants: " + rest);
 }
 
-function Convo_GetRestaurantsForAddress(bot, message){
-    bot.startConversation(message, function(err, convo){
-    if(!err){
-        var getmethod = "";
-        convo.ask('Pickup, delivery, or both?', [
-            {
-                pattern: 'pickup',
-                callback: function(response, convo){
-                    convo.next();
-                }
-            },
-            {
-                pattern: 'delivery',
-                callback: function(response, convo){
-                    convo.next();
-                }
-            },
-            {
-                pattern: 'both',
-                callback: function(response, convo){
-                    convo.next();
-                }
-            },
-            {
-                default: true,
-                callback: function(response, convo){
-                    convo.repeat();
-                }
-            }
-        ], {'key' : 'method'});
 
-        convo.ask("Address?", function(response, convo){
-            convo.ask("Your address is " + response.text + "?", [
-                            {
-                                pattern: 'yes',
-                                callback: function(response, convo) {
-                                    // since no further messages are queued after this,
-                                    // the conversation will end naturally with status == 'completed'
-                                    convo.next();
-                                }
-                            },
-                            {
-                                pattern: 'no',
-                                callback: function(response, convo) {
-                                    convo.repeat();
-                                }
-                            },
-                            {
-                                default: true,
-                                callback: function(response, convo) {
-                                    convo.repeat();
-                                }
-                            }
-            ]);
-            convo.next();
-        }, {'key' : 'address'});
-
-        convo.on('end', function(convo){
-            if(convo.status == 'completed'){
-                convo.say( 'Making query....');
-                var meth = convo.extractResponse('method');
-                var addr = convo.extractResponse('address');
-                bot.reply(message, 'You wanted to search near ' + addr + ' for delivery or pickup: ' + meth);
-                /*
-                var options = {
-                    'host' : "https://api.eatstreet.com/publicapi/v1/restaurant/search?" + "method=" + getmethod + "&" + encodeURIComponent(address),
-                    'X-Access-Token' :'8b70a7ee390274a3' 
-                };
-                */
-            }else{
-                bot.reply(message, 'Cancelling query.');
-            }
-        })
-        
-    }
-    });
-}
 
 Initialize();
