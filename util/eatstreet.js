@@ -10,7 +10,6 @@ var method = "delivery";
 var address = "618 Allison Road Piscataway NJ";
 
 
-// REMOVE THIS VALUE BEFORE PUBLISHING PLS
 var access_token = auth.eatstreet;
 
 // Gets the restaurants near this address.

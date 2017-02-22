@@ -15,9 +15,8 @@ var address_cache = [];
 var restaurant_cache = [];
 
 var http = require('http');
-var restaurants = require('./restaurant.json');
-var eatstreet = require('./eatstreet.js');
-var auth = require('./auth.js');
+var eatstreet = require('./util/eatstreet.js');
+var auth = require('./util/auth.js');
 
 function Initialize(){
     Botkit = require('./node_modules/botkit/lib/Botkit.js');
@@ -126,15 +125,16 @@ function GetMenu(bot, message){
 
                             // iterating over each category
                             response.forEach((element) => {
-                                reply_string.push('Category: ' + element.name + '\n');
-                                reply_string.push('----------------------------------------');
+                                reply_string.push('----------------------------------------\n');
+                                reply_string.push( element.name + '\n');
+                                reply_string.push('----------------------------------------\n');
 
                                 // iterating over inner 'items' array
                                 element.items.forEach((inner_element) => {
                                     reply_string.push(inner_element.name + " " + inner_element.basePrice + '\n');
                                 });
                             });
-                            bot.reply(message, "Menu items for " + restaurant_cache[rest_index].name +  ": " + reply_string.join(''));
+                            bot.reply(message, "Menu items for " + restaurant_cache[rest_index].name +  ":\n" + reply_string.join(''));
                         });
                     }else{
                         bot.reply(message, "Couldn't find " + name + ' in saved restaurants.');
