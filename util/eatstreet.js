@@ -6,8 +6,6 @@ var auth = require('./auth.js');
 
 var host = "api.eatstreet.com";
 var restaurant_endpoint = "/publicapi/v1/restaurant";
-var method = "delivery";
-var address = "618 Allison Road Piscataway NJ";
 
 
 var access_token = auth.eatstreet;
