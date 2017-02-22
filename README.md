@@ -9,4 +9,4 @@ Order from Eatstreet through Slack!
 * Can list the entire menu for a given restaurant 
 
 ## To try:
-You need a Slackbot token, as well as an Eatstreet API token. Place them into auth.js in the marked variables, then run 'node adjutant.js'.
+You need a Slackbot token, as well as an Eatstreet API token. Place them into auth.js in the marked variables, then run 'node foodbot.js'.
