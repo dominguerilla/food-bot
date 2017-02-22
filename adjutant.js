@@ -16,12 +16,13 @@ var restaurant_cache = [];
 var http = require('http');
 var restaurants = require('./restaurant.json');
 var eatstreet = require('./eatstreet.js');
+var auth = require('./auth.js');
 
 function Initialize(){
     Botkit = require('./node_modules/botkit/lib/Botkit.js');
     controller = Botkit.slackbot({});
     bot = controller.spawn({
-        token: 'xoxb-62642765440-fD85sUDyn1WQj3V8IZHDvD3h'
+        token: auth.slackbot
     }).startRTM();
 
     controller.hears(['menu'], 'direct_message', GetMenu);
@@ -192,6 +193,10 @@ function GetMenu(bot, message){
                     if(rest_index > 0){
                         eatstreet.GetMenu(restaurant_cache[rest_index].apiKey, function(response){
                             response = JSON.parse(response);
+                            if(response.error == 'true'){
+                                bot.reply(message, 'Error getting restaurant: ' + response.error_message);
+                                return;
+                            }
 
                             // iterating over each category
                             response.forEach((element) => {
@@ -205,7 +210,7 @@ function GetMenu(bot, message){
                             bot.reply(message, "Menu items for " + restaurant_cache[rest_index].name +  ": " + reply_string.join(''));
                         });
                     }else{
-                        bot.reply("Couldn't find " + name + ' in saved restaurants.');
+                        bot.reply(message, "Couldn't find " + name + ' in saved restaurants.');
                     }
                 }
             });

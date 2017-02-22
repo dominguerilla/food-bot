@@ -2,14 +2,16 @@
 
 var http = require('http');
 var request = require('request');
+var auth = require('./auth.js');
 
 var host = "api.eatstreet.com";
 var restaurant_endpoint = "/publicapi/v1/restaurant";
 var method = "delivery";
 var address = "618 Allison Road Piscataway NJ";
 
+
 // REMOVE THIS VALUE BEFORE PUBLISHING PLS
-var access_token = '8b70a7ee390274a3';
+var access_token = auth.eatstreet;
 
 // Gets the restaurants near this address.
 function GetRestaurants(address, callback){
