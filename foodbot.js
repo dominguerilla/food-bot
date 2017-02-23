@@ -25,8 +25,8 @@ function Initialize(){
         token: auth.slackbot
     }).startRTM();
 
-    controller.hears(['menu'], 'direct_message', GetMenu);
-    controller.hears(['list'], 'direct_message', ListRestaurants);
+    controller.hears(['menu'], 'direct_message,direct_mention', GetMenu);
+    controller.hears(['list'], 'direct_message,direct_mention', ListRestaurants);
 }
 
 /*
