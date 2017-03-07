@@ -1,0 +1,28 @@
+{
+  "name": "foodbot",
+  "version": "0.5.0",
+  "description": "Interact with the Eatstreet API through Slack",
+  "main": "foodbot.js",
+  "dependencies": {
+    "botkit": "^0.5.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dominguerilla/food-bot.git"
+  },
+  "keywords": [
+    "food",
+    "eatstreet",
+    "slack"
+  ],
+  "author": "Carlos Dominguez",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dominguerilla/food-bot/issues"
+  },
+  "homepage": "https://github.com/dominguerilla/food-bot#readme"
+}
