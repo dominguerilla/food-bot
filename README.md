@@ -1,5 +1,5 @@
 # Food-Bot
-by ~~Meesun Park and Kelly Tran~~ Carlos Dominguez
+by Meesun Park, Carlos Domingues, Kelly Tran
 
 ## Description
 Order from Eatstreet through Slack! 
