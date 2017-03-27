@@ -4,11 +4,12 @@
   "description": "Interact with the Eatstreet API through Slack",
   "main": "foodbot.js",
   "dependencies": {
-    "botkit": "^0.5.1"
+    "botkit": "^0.5.1",
+    "q": "^1.5.0"
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node foodbot.js"
   },
   "repository": {
     "type": "git",

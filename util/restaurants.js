@@ -1,4 +1,5 @@
-var eatstreet = require('./util/eatstreet.js');
+var eatstreet = require('./eatstreet.js');
+var Q = require('q');
 
 // Should be populated with 
 // { address : string, time_of_cache: long, 
@@ -16,7 +17,7 @@ var restaurant_cache = [];
     Finds the restaurants available for a given address.
     Also caches the search into address_cache, as well as the restaurants found in restaurant_cache.
 */
-function FindRestaurants(bot, message){
+function Convo_FindRestaurants(bot, message){
     var response = '';
     var restaurant_list = [];
 
@@ -85,46 +86,26 @@ function FindRestaurants(bot, message){
     Given the name of a restaurant that is saved in restaurant_cache, queries EatStreet for their menu and displays the full content 
     to the chatter.
 */
-function GetMenu(bot, message){
+function Convo_GetMenu(bot, message){
     bot.startConversationInThread(message, function(err, convo){
         if(!err){
             convo.ask('Name of restaurant?', function(response, convo){convo.next();},{'key' : 'name'});
             convo.on('end', function(convo){
                 if(convo.status == 'completed'){
-                    var reply_string = [];
                     bot.reply(message, 'Finding menu....');
                     var name = convo.extractResponse('name');
-                    var rest_index = IndexOfObject(restaurant_cache, name, function(element, targetval){
-                        return element.name === targetval;
-                    });
-                    if(rest_index > 0){
-                        eatstreet.GetMenu(restaurant_cache[rest_index].apiKey, function(response){
-                            response = JSON.parse(response);
-                            if(response.error == 'true'){
-                                bot.reply(message, 'Error getting restaurant: ' + response.error_message);
-                                return;
-                            }
-
-                            // iterating over each category
-                            response.forEach((element) => {
-                                reply_string.push('----------------------------------------\n');
-                                reply_string.push( element.name + '\n');
-                                reply_string.push('----------------------------------------\n');
-
-                                // iterating over inner 'items' array
-                                element.items.forEach((inner_element) => {
-                                    reply_string.push(inner_element.name + " " + inner_element.basePrice + '\n');
-                                });
-                            });
-                            bot.reply(message, "Menu items for " + restaurant_cache[rest_index].name +  ":\n" + reply_string.join(''));
-                        });
-                    }else{
-                        bot.reply(message, "Couldn't find " + name + ' in saved restaurants.');
-                    }
+                    Q.nfcall(GetMenu, name)
+                    .then( function (value) {
+                        console.log('Successfully got menu!');
+                        bot.reply(message, 'Menu:\n' + value.join(''));
+                    }, function(error){
+                        console.log('Error in Convo_GetMenu(): ' + error + "\n" + error.stack);
+                        bot.reply(message, "Error: " + error);
+                    })
                 }
             });
         }else{
-            console.log('*** ERROR STARTING CONVERSATION ***');
+            console.log('*** ERROR STARTING CONVERSATION: ' + err + ' ***');
         }
     });
 }
@@ -170,7 +151,7 @@ function CacheAddressAndRestaurants(address, restaurants){
     }
 }
 
-function ListRestaurants(bot, message){
+function Convo_ListRestaurants(bot, message){
     var allRes = "";
     restaurant_cache.forEach((e) => {
         allRes += e.name + "\n";
@@ -188,6 +169,40 @@ function IndexOfObject(arr, targetval, checkFunc){
         }
     }
     return -1;
+}
+
+function GetMenu(restaurant_name, callback){
+    var reply_string = [];
+    var rest_index = IndexOfObject(restaurant_cache, restaurant_name, function(element, targetval){
+        return element.name === targetval;
+    });
+    if(rest_index > 0){
+        console.log(restaurant_name + " found. Getting menu...");
+        eatstreet.GetMenu(restaurant_cache[rest_index].apiKey, function(response){
+            response = JSON.parse(response);
+            if(response.error == 'true'){
+                console.log('Error getting restaurant: ' + response.error_message);
+                return;
+            }
+
+            // iterating over each category
+            response.forEach((element) => {
+                reply_string.push('----------------------------------------\n');
+                reply_string.push( element.name + '\n');
+                reply_string.push('----------------------------------------\n');
+
+                // iterating over inner 'items' array
+                element.items.forEach((inner_element) => {
+                    reply_string.push(inner_element.name + " " + inner_element.basePrice + '\n');
+                });
+            });
+            console.log('Got menu for ' + restaurant_name + ' successfully.');
+            return callback(null, reply_string);
+        });
+    }else{
+        console.log('restaurant ' + restaurant_name + ' not found.');
+        return callback("Restaurant " + restaurant_name + " not found.", null);
+    }
 }
 
 function PrintAddressCache(){
@@ -218,5 +233,6 @@ function PrintRestaurantCache(){
 }
 
 module.exports.GetMenu = GetMenu;
-module.exports.FindRestaurants = FindRestaurants;
-module.exports.ListRestaurants = ListRestaurants;
+module.exports.Convo_GetMenu = Convo_GetMenu;
+module.exports.Convo_FindRestaurants = Convo_FindRestaurants;
+module.exports.Convo_ListRestaurants = Convo_ListRestaurants;
