@@ -1,4 +1,5 @@
 var eatstreet = require('./eatstreet.js');
+var auth = require('./auth.js');
 var Q = require('q');
 
 // Should be populated with 
@@ -12,6 +13,24 @@ var address_cache = [];
 // {name : string, apiKey : string }
 // This will make it easier to search Eatstreet for a specific restaurant.
 var restaurant_cache = [];
+
+function Initialize(){
+    auth.initial_addresses.forEach( function (address) {
+        console.log('Caching restaurants for ' + address);
+        Q.nfcall(eatstreet.GetRestaurants, address)
+        .then( function (res) {
+            console.log('GetRestaurants call successful.');
+            fullResponse = JSON.parse(res);
+            if( fullResponse.restaurants.length == 0){
+                console.log('No restaurants found for ' + address);
+            }else{
+                CacheAddressAndRestaurants( address, fullResponse.restaurants );
+                console.log('Initial caching complete.');
+            }
+        },
+        function (error) { console.log(error); });
+    });
+}
 
 /*
     Finds the restaurants available for a given address.
@@ -61,17 +80,18 @@ function Convo_FindRestaurants(bot, message){
                 if(convo.status == 'completed'){
                         bot.reply(message, 'Searching for restaurants....');
                         var address = convo.extractResponse('address');
-                        eatstreet.GetRestaurants( address ,  function(rez){
+                        Q.nfcall( eatstreet.GetRestaurants, address )
+                        .then(  function(rez){
                             response = JSON.parse(rez);
                             if(response.restaurants.length == 0){
                                 bot.reply(message, 'No restaurants found for ' + address + ".");
                             }else{
                                 CacheAddressAndRestaurants( address , response.restaurants);
                                 //PrintRestaurantCache();
-                                response.restaurants.forEach((element) => {restaurant_list.push(element.name); });
+                                //response.restaurants.forEach((element) => {restaurant_list.push((element.name, element.apiKey)); });
                                 bot.reply(message, 'Available restaurants for ' + address + ': \n' + restaurant_list.join('\n'));
                             }
-                        });
+                        }, console.error);
                 }else{
                     bot.reply(message, 'Try asking again.');
                 }
@@ -232,6 +252,7 @@ function PrintRestaurantCache(){
     console.log('===================');
 }
 
+module.exports.Initialize = Initialize;
 module.exports.GetMenu = GetMenu;
 module.exports.Convo_GetMenu = Convo_GetMenu;
 module.exports.Convo_FindRestaurants = Convo_FindRestaurants;

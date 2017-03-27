@@ -14,6 +14,10 @@ function Initialize(){
         token: auth.slackbot
     }).startRTM();
 
+    // Initialize the restaurant cache with restaurants around the listed
+    // addresses in auth.js
+    restaurants.Initialize();
+
     controller.hears(['menu'], 'direct_message,direct_mention', restaurants.Convo_GetMenu);
     controller.hears(['find', 'nearby', 'search', 'restaurant', 'restaurants'], 'direct_message,direct_mention', restaurants.Convo_FindRestaurants);
     controller.hears(['help'], 'direct_message,direct_mention', ShowHelp);

@@ -24,17 +24,21 @@ function GetRestaurants(address, callback){
         'headers' : {'X-Access-Token' : access_token}
     };
 
-    
-    http.request(options, function (response){
+    try{
+        http.request(options, function (response){
         var str = '';
         response.on('data', function (chunk){
             str += chunk;
         });
 
         response.on('end', function(){
-            return callback(str);
+            return callback(null, str);
         })
-    }).end();
+        }).end();
+    }catch(err){
+        return err;
+    }
+    
 }
 
 function GetMenu(apiKey, callback){
