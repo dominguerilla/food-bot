@@ -41,6 +41,28 @@ function GetRestaurants(address, callback){
     
 }
 
+function GetRestaurant(apiKey, callback){
+    var path_url = restaurant_endpoint + "/" + encodeURIComponent(apiKey);
+    console.log('Path URL: ' + path_url);
+
+    var options = {
+        'host' : host,
+        'path' : path_url,
+        'headers' : {'X-Access-Token' : access_token}
+    };
+
+    http.request(options, function (response){
+        var str = '';
+        response.on('data', function (chunk){
+            str += chunk;
+        });
+
+        response.on('end', function(){
+            return callback(str);
+        })
+    }).end();
+}
+
 function GetMenu(apiKey, callback){
     var path_url = restaurant_endpoint + "/" + encodeURIComponent(apiKey) + "/menu";
     console.log('Path URL: ' + path_url);

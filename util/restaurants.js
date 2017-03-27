@@ -113,7 +113,10 @@ function Convo_GetMenu(bot, message){
             convo.on('end', function(convo){
                 if(convo.status == 'completed'){
                     bot.reply(message, 'Finding menu....');
-                    var name = convo.extractResponse('name');
+                    var rawName = convo.extractResponse('name');
+                    var name = rawName.escapeSpecialChars();
+                    console.log("Raw restaurant name: " + rawName);
+                    console.log("Escaped restaurant name: " + name);
                     Q.nfcall(GetMenu, name)
                     .then( function (value) {
                         console.log('Successfully got menu!');
@@ -147,7 +150,7 @@ function CacheAddressAndRestaurants(address, restaurants){
         var rest_tuples = [];
         // first, get the restaurant names and their apiKeys
         restaurants.forEach((element) => {
-            r = {'name' : element.name, 'apiKey' : element.apiKey};
+            r = {'name' : element.name.escapeSpecialChars(), 'apiKey' : element.apiKey};
             
             // check if restaurant is already in restaurant_cache
             var r_index = IndexOfObject(restaurant_cache, r.name, function(element, targetval){
@@ -213,7 +216,7 @@ function GetMenu(restaurant_name, callback){
 
                 // iterating over inner 'items' array
                 element.items.forEach((inner_element) => {
-                    reply_string.push(inner_element.name + " " + inner_element.basePrice + '\n');
+                    reply_string.push(inner_element.name + " $" + inner_element.basePrice + '\n');
                 });
             });
             console.log('Got menu for ' + restaurant_name + ' successfully.');
@@ -251,6 +254,19 @@ function PrintRestaurantCache(){
     });
     console.log('===================');
 }
+
+// http://stackoverflow.com/questions/4253367/how-to-escape-a-json-string-containing-newline-characters-using-javascript
+String.prototype.escapeSpecialChars = function() {
+    return this.replace(/\\n/g, "\\n")
+               .replace(/\\'/g, "\\'")
+               .replace(/\\"/g, '\\"')
+               .replace(/\\&/g, "\\&")
+               .replace(/\\r/g, "\\r")
+               .replace(/\\t/g, "\\t")
+               .replace(/\\b/g, "\\b")
+               .replace(/\\f/g, "\\f")
+               .replace("&amp;", "\&");
+};
 
 module.exports.Initialize = Initialize;
 module.exports.GetMenu = GetMenu;

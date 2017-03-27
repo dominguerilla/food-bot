@@ -22,7 +22,7 @@ function Initialize(){
     controller.hears(['find', 'nearby', 'search', 'restaurant', 'restaurants'], 'direct_message,direct_mention', restaurants.Convo_FindRestaurants);
     controller.hears(['help'], 'direct_message,direct_mention', ShowHelp);
     controller.hears(['list', 'saved'], 'direct_message,direct_mention', restaurants.Convo_ListRestaurants);
-    controller.hears('startorder (.*)', 'direct_message', orders.Convo_StartOrder);
+    controller.hears('startorder (.*)', 'direct_message,direct_mention', orders.Convo_StartOrder);
 }
 
 
