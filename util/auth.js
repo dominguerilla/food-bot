@@ -3,5 +3,9 @@
 var eatstreet_token = ''; // EATSTREET API TOKEN HERE
 var slackbot_token = ''; // SLACKBOT TOKEN HERE
 
+// Will get and cache these addresses on bot startup.
+var initial_addresses = [];
+
 module.exports.eatstreet = eatstreet_token;
 module.exports.slackbot = slackbot_token;
+module.exports.initial_addresses = initial_addresses;
